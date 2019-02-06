@@ -126,6 +126,8 @@ def save_and_push_file(content_blocker_json):
                        refspecs="master",
                        vendor=ParamikoSSHVendor(), key_filename="/tmp/id_ed25519_defenceblocker")
 
+def pub_sub_trigger(data, context):
+    main()
 
 if __name__ == "__main__":
     main()
