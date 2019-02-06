@@ -109,7 +109,7 @@ def save_and_push_file(content_blocker_json):
         shutil.rmtree("/tmp/defenceblocklist")
 
     with open("/tmp/id_ed25519_defenceblocker", 'w') as ssh_private_key:
-        ssh_private_key.write(os.environ['DEPLOY_KEY'])
+        ssh_private_key.write("\n".join(os.environ['DEPLOY_KEY'].split()))
     
     with open("/tmp/id_ed25519_defenceblocker", 'r') as ssh_private_key:
         print(ssh_private_key.readlines())
