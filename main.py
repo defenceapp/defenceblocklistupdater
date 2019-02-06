@@ -113,9 +113,6 @@ def save_and_push_file(content_blocker_json):
         ssh_private_key.write(os.environ['DEPLOY_KEY'])
         ssh_private_key.write("-----END OPENSSH PRIVATE KEY-----\n")
     
-    with open("/tmp/id_ed25519_defenceblocker", 'r') as ssh_private_key:
-        print(ssh_private_key.readlines())
-    
     blocklist_repo = porcelain.clone("git@github.com:defenceapp/defenceblocklist.git", vendor=ParamikoSSHVendor(),
                                      target="/tmp/defenceblocklist", key_filename="/tmp/id_ed25519_defenceblocker", 
                                      errstream=porcelain.NoneStream())
