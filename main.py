@@ -117,7 +117,8 @@ def save_and_push_file(content_blocker_json):
         print(ssh_private_key.readlines())
     
     blocklist_repo = porcelain.clone("git@github.com:defenceapp/defenceblocklist.git", vendor=ParamikoSSHVendor(),
-                                     target="/tmp/defenceblocklist", key_filename="/tmp/id_ed25519_defenceblocker")
+                                     target="/tmp/defenceblocklist", key_filename="/tmp/id_ed25519_defenceblocker", 
+                                     errstream=porcelain.NoneStream())
 
     with open("/tmp/defenceblocklist/blockList.json", 'w') as content_blocker_file:
         json.dump(content_blocker_json, content_blocker_file, sort_keys=True, indent=4, separators=(',', ': '))
@@ -129,7 +130,8 @@ def save_and_push_file(content_blocker_json):
                          committer="Updater <no-reply@defenceblocker.app>")
         porcelain.push(blocklist_repo.path, remote_location="git@github.com:defenceapp/defenceblocklist.git",
                        refspecs="master",
-                       vendor=ParamikoSSHVendor(), key_filename="/tmp/id_ed25519_defenceblocker")
+                       vendor=ParamikoSSHVendor(), key_filename="/tmp/id_ed25519_defenceblocker", 
+                       errstream=porcelain.NoneStream())
 
 def pub_sub_trigger(data, context):
     main()
