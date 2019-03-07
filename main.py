@@ -8,12 +8,12 @@ from dulwich import porcelain
 from dulwich.contrib.paramiko_vendor import ParamikoSSHVendor
 
 WHITELIST_DOMAINS = [
-    ("myetherwallet", "com", 3, []),
+    ("myetherwallet", "com", 2, []),
     ("kraken", "com", 1, []),
     ("mycrypto", "com", 1, []),
     ("shapeshift", "com", 1, []),
     ("poloniex", "com", 1, []),
-    ("binance", "com", 1, []),
+    ("binance", "com", 0, []),
     ("bitfinex", "com", 1, []),
     ("blockchain", "com", 1, ["blockchain.info"]),
     ("coindesk", "com", 1, ["coindash.io"]),
@@ -21,12 +21,12 @@ WHITELIST_DOMAINS = [
     ("cobinhood", "com", 1, []),
     ("coinbase", "com", 1, []),
     ("bitstamp", "net", 1, []),
-    ("bittrex", "com", 1, []),
-    ("bitmex", "com", 1, []),
+    ("bittrex", "com", 0, []),
+    ("bitmex", "com", 0, []),
     ("etherdelta", "com", 1, []),
-    ("hitbtc", "com", 1, []),
+    ("hitbtc", "com", 0, []),
     ("electrum", "org", 1, []),
-    ("airswap", "io", 1, []),
+    ("airswap", "io", 0, []),
     ("ethfinex", "com", 1, []),
 ]
 
