@@ -11,7 +11,7 @@ WHITELIST_DOMAINS = [
     ("myetherwallet", "com", 2, []),
     ("kraken", "com", 1, []),
     ("mycrypto", "com", 1, []),
-    ("shapeshift", "com", 1, []),
+    ("shapeshift", "com", 1, ["shapeshift.io"]),
     ("poloniex", "com", 1, []),
     ("binance", "com", 0, []),
     ("bitfinex", "com", 1, []),
