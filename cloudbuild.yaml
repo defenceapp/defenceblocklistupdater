@@ -1,0 +1,8 @@
+cloudbuild.yaml
+steps:
+- name: gcr.io/cloud-builders/gcloud
+  args:
+  - functions
+  - deploy
+  - --entry-point=pub_sub_trigger
+  - blocklist-updater
