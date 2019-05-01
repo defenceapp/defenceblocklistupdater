@@ -13,7 +13,6 @@ WHITELIST_DOMAINS = [
     ("mycrypto", "com", 1, []),
     ("shapeshift", "com", 1, ["shapeshift.io"]),
     ("poloniex", "com", 1, []),
-    ("binance", "com", 0, []),
     ("bitfinex", "com", 1, []),
     ("blockchain", "com", 1, ["blockchain.info"]),
     ("coindesk", "com", 1, ["coindash.io"]),
