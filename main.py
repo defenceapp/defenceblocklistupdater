@@ -7,6 +7,12 @@ import shutil
 from dulwich import porcelain
 from dulwich.contrib.paramiko_vendor import ParamikoSSHVendor
 
+REPO_LOCATION = "git@github.com:defenceapp/defenceblocklist.git"
+CLONE_LOCATION = "/tmp/defenceblocklist"
+GIT_AUTHOR = "Updater <no-reply@defenceblocker.app>"
+PRIVATE_KEY_FILENAME = "/tmp/id_ed25519_defenceblocker"
+BLOCKLIST_FILENAME = "blockList.json"
+
 WHITELIST_DOMAINS = [
     ("myetherwallet", "com", 2, []),
     ("kraken", "com", 1, []),
@@ -58,7 +64,7 @@ def all_possible_regexes(domain, subs):
         domain_with_fuzz = ".?"
         for character in domain:
             domain_with_fuzz += f"[{character}{''.join(COMMON_SUBS.get(character, []))}].?"
-        regex_domains.append(f"https?://([a-z0-9\-]*\.)*(xn\-\-)?{domain_with_fuzz}(\-[a-z0-9]*)?([a-z0-9\-]*\.)*\..*")
+        regex_domains.append(fr"https?://([a-z0-9\-]*\.)*(xn\-\-)?{domain_with_fuzz}(\-[a-z0-9]*)?([a-z0-9\-]*\.)*\..*")
     return regex_domains
 
 
@@ -104,33 +110,33 @@ def main():
 
 def save_and_push_file(content_blocker_json):
 
-    if os.path.exists("/tmp/defenceblocklist"):
-        shutil.rmtree("/tmp/defenceblocklist")
+    if os.path.exists(CLONE_LOCATION):
+        shutil.rmtree(CLONE_LOCATION)
 
-    with open("/tmp/id_ed25519_defenceblocker", 'w') as ssh_private_key:
+    with open(PRIVATE_KEY_FILENAME, 'w') as ssh_private_key:
         ssh_private_key.write("-----BEGIN OPENSSH PRIVATE KEY-----\n")
-        ssh_private_key.write(os.environ['DEPLOY_KEY'])
+        ssh_private_key.write(os.environ['DEFENCEBLOCKER_DEPLOY_KEY'])
         ssh_private_key.write("-----END OPENSSH PRIVATE KEY-----\n")
     
-    blocklist_repo = porcelain.clone("git@github.com:defenceapp/defenceblocklist.git", vendor=ParamikoSSHVendor(),
-                                     target="/tmp/defenceblocklist", key_filename="/tmp/id_ed25519_defenceblocker", 
+    blocklist_repo = porcelain.clone(REPO_LOCATION, vendor=ParamikoSSHVendor(),
+                                     target=CLONE_LOCATION, key_filename=PRIVATE_KEY_FILENAME,
                                      errstream=porcelain.NoneStream())
 
-    with open("/tmp/defenceblocklist/blockList.json", 'w') as content_blocker_file:
+    with open(f"{CLONE_LOCATION}/{BLOCKLIST_FILENAME}", 'w') as content_blocker_file:
         json.dump(content_blocker_json, content_blocker_file, sort_keys=True, indent=4, separators=(',', ': '))
 
     if porcelain.status(blocklist_repo.path).unstaged:
-        porcelain.add(blocklist_repo.path, paths=[blocklist_repo.path + "/blockList.json"])
+        porcelain.add(blocklist_repo.path, paths=[blocklist_repo.path + f"/{BLOCKLIST_FILENAME}"])
         porcelain.commit(blocklist_repo.path, message="Update blockList.json",
-                         author="Updater <no-reply@defenceblocker.app>",
-                         committer="Updater <no-reply@defenceblocker.app>")
-        porcelain.push(blocklist_repo.path, remote_location="git@github.com:defenceapp/defenceblocklist.git",
-                       refspecs="master",
-                       vendor=ParamikoSSHVendor(), key_filename="/tmp/id_ed25519_defenceblocker", 
-                       errstream=porcelain.NoneStream())
+                         author=GIT_AUTHOR,
+                         committer=GIT_AUTHOR)
+        porcelain.push(blocklist_repo.path, remote_location=REPO_LOCATION, refspecs="master",
+                       vendor=ParamikoSSHVendor(), key_filename=PRIVATE_KEY_FILENAME, errstream=porcelain.NoneStream())
+
 
 def pub_sub_trigger(data, context):
     main()
+
 
 if __name__ == "__main__":
     main()
