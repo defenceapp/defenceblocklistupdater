@@ -12,6 +12,9 @@ CLONE_LOCATION = "/tmp/defenceblocklist"
 GIT_AUTHOR = "Updater <no-reply@defenceblocker.app>"
 PRIVATE_KEY_FILENAME = "/tmp/id_ed25519_defenceblocker"
 BLOCKLIST_FILENAME = "blockList.json"
+GIT_DEPLOY_KEY = f"-----BEGIN OPENSSH PRIVATE KEY-----\n" \
+                 f"{os.environ['DEFENCEBLOCKER_DEPLOY_KEY']}\n" \
+                 f"-----END OPENSSH PRIVATE KEY-----"
 
 WHITELIST_DOMAINS = [
     ("myetherwallet", "com", 2, []),
@@ -114,10 +117,8 @@ def save_and_push_file(content_blocker_json):
         shutil.rmtree(CLONE_LOCATION)
 
     with open(PRIVATE_KEY_FILENAME, 'w') as ssh_private_key:
-        ssh_private_key.write("-----BEGIN OPENSSH PRIVATE KEY-----\n")
-        ssh_private_key.write(os.environ['DEFENCEBLOCKER_DEPLOY_KEY'])
-        ssh_private_key.write("-----END OPENSSH PRIVATE KEY-----\n")
-    
+        ssh_private_key.write(GIT_DEPLOY_KEY)
+
     blocklist_repo = porcelain.clone(REPO_LOCATION, vendor=ParamikoSSHVendor(),
                                      target=CLONE_LOCATION, key_filename=PRIVATE_KEY_FILENAME,
                                      errstream=porcelain.NoneStream())
