@@ -4,4 +4,5 @@ steps:
   - functions
   - deploy
   - --entry-point=pub_sub_trigger
+  - --source=https://source.developers.google.com/projects/defence-blocklist-updater/repos/github_defenceapp_defenceblocklistupdater/moveable-aliases/master/paths/
   - blocklist-updater
