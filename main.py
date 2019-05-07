@@ -21,26 +21,26 @@ BLACKLIST_URL = "https://etherscamdb.info/api/blacklist/"
 WHITELIST_URL = "https://etherscamdb.info/api/whitelist/"
 
 TARGETED_DOMAINS = [
-    ("airswap", "io", 0),
-    ("bitfinex", "com", 1),
-    ("bitmex", "com", 0),
-    ("bitstamp", "net", 1),
-    ("bittrex", "com", 0),
-    ("blockchain", "com", 1),
-    ("cobinhood", "com", 1),
-    ("coinbase", "com", 1),
-    ("coindash", "io", 1),
-    ("coindesk", "com", 1),
-    ("electrum", "org", 1),
-    ("etherdelta", "com", 1),
-    ("ethfinex", "com", 1),
-    ("hitbtc", "com", 0),
-    ("kraken", "com", 1),
-    ("mycrypto", "com", 1),
-    ("myetherwallet", "com", 2),
-    ("poloniex", "com", 1),
-    ("shapeshift", "com", 1),
-    ("shapeshift", "io", 1),
+    ("airswap", "io"),
+    ("bitfinex", "com"),
+    ("bitmex", "com"),
+    ("bitstamp", "net"),
+    ("bittrex", "com"),
+    ("blockchain", "com"),
+    ("cobinhood", "com"),
+    ("coinbase", "com"),
+    ("coindash", "io"),
+    ("coindesk", "com"),
+    ("electrum", "org"),
+    ("etherdelta", "com"),
+    ("ethfinex", "com"),
+    ("hitbtc", "com"),
+    ("kraken", "com"),
+    ("mycrypto", "com"),
+    ("myetherwallet", "com"),
+    ("poloniex", "com"),
+    ("shapeshift", "com"),
+    ("shapeshift", "io"),
 ]
 
 COMMON_SUBS = {
@@ -96,7 +96,7 @@ def main():
 
     whitelisted_domains = fetch_domain_list(WHITELIST_URL)
 
-    for domain_body, tld, _ in TARGETED_DOMAINS:
+    for domain_body, tld in TARGETED_DOMAINS:
         whitelisted_domains.append(f"*{domain_body}.{tld}")
 
     whitelisted_domains = list(set(whitelisted_domains))
@@ -113,7 +113,9 @@ def main():
     }]
 
     url_regexes = []
-    for domain_body, tld, subs in TARGETED_DOMAINS:
+    unique_domain_bodies = sorted(list(set([x[0] for x in TARGETED_DOMAINS])))
+    for domain_body in unique_domain_bodies:
+        subs = get_subs_for_domain(domain_body)
         for url_regex in all_possible_regexes(domain_body, subs):
             rule = {
                 "trigger": {
@@ -131,6 +133,13 @@ def main():
 
     save_and_push_file(content_blocker_json)
 
+
+def get_subs_for_domain(domain_body):
+    domain_body_len = len(domain_body)
+    if domain_body_len <= 7:
+        return 0
+    else:
+        return 1
 
 def save_and_push_file(content_blocker_json):
 
