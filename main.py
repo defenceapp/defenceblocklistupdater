@@ -12,30 +12,34 @@ CLONE_LOCATION = "/tmp/defenceblocklist"
 GIT_AUTHOR = "Updater <no-reply@defenceblocker.app>"
 PRIVATE_KEY_FILENAME = "/tmp/id_ed25519_defenceblocker"
 BLOCKLIST_FILENAME = "blockList.json"
+BLOCKLIST_FILE_PATH = f"{CLONE_LOCATION}/{BLOCKLIST_FILENAME}"
 GIT_DEPLOY_KEY = f"-----BEGIN OPENSSH PRIVATE KEY-----\n" \
                  f"{os.environ['DEFENCEBLOCKER_DEPLOY_KEY']}\n" \
                  f"-----END OPENSSH PRIVATE KEY-----"
 
-WHITELIST_DOMAINS = [
-    ("myetherwallet", "com", 2, []),
-    ("kraken", "com", 1, []),
-    ("mycrypto", "com", 1, []),
-    ("shapeshift", "com", 1, ["shapeshift.io"]),
-    ("poloniex", "com", 1, []),
-    ("bitfinex", "com", 1, []),
-    ("blockchain", "com", 1, ["blockchain.info"]),
-    ("coindesk", "com", 1, ["coindash.io"]),
-    ("coindash", "io", 1, ["coindesk.com"]),
-    ("cobinhood", "com", 1, []),
-    ("coinbase", "com", 1, []),
-    ("bitstamp", "net", 1, []),
-    ("bittrex", "com", 0, []),
-    ("bitmex", "com", 0, []),
-    ("etherdelta", "com", 1, []),
-    ("hitbtc", "com", 0, []),
-    ("electrum", "org", 1, []),
-    ("airswap", "io", 0, []),
-    ("ethfinex", "com", 1, []),
+BLACKLIST_URL = "https://etherscamdb.info/api/blacklist/"
+WHITELIST_URL = "https://etherscamdb.info/api/whitelist/"
+
+TARGETED_DOMAINS = [
+    ("myetherwallet", "com", 2),
+    ("kraken", "com", 1),
+    ("mycrypto", "com", 1),
+    ("shapeshift", "com", 1),
+    ("poloniex", "com", 1),
+    ("bitfinex", "com", 1),
+    ("blockchain", "com", 1),
+    ("coindesk", "com", 1),
+    ("coindash", "io", 1),
+    ("cobinhood", "com", 1),
+    ("coinbase", "com", 1),
+    ("bitstamp", "net", 1),
+    ("bittrex", "com", 0),
+    ("bitmex", "com", 0),
+    ("etherdelta", "com", 1),
+    ("hitbtc", "com", 0),
+    ("electrum", "org", 1),
+    ("airswap", "io", 0),
+    ("ethfinex", "com", 1),
 ]
 
 COMMON_SUBS = {
@@ -71,8 +75,8 @@ def all_possible_regexes(domain, subs):
     return regex_domains
 
 
-def main():
-    json_result = requests.get("https://etherscamdb.info/api/blacklist/").json()
+def fetch_domain_list(url):
+    json_result = requests.get(url).json()
     domains = []
     for result in json_result:
         if re.match(r"\d+\.\d+\.\d+\.\d+", result):
@@ -80,7 +84,23 @@ def main():
         if result.startswith("www."):
             continue
         domains.append(f"*{result}")
+    domains = list(set(domains))
     domains.sort()
+    return domains
+
+
+def main():
+
+    domains = fetch_domain_list(BLACKLIST_URL)
+
+    whitelisted_domains = fetch_domain_list(WHITELIST_URL)
+
+    for domain_body, tld, _ in TARGETED_DOMAINS:
+        whitelisted_domains.append(f"*{domain_body}.{tld}")
+
+    whitelisted_domains = list(set(whitelisted_domains))
+    whitelisted_domains.sort()
+
     content_blocker_json = [{
         "trigger": {
             "url-filter": ".*",
@@ -92,12 +112,12 @@ def main():
     }]
 
     url_regexes = []
-    for domain_body, tld, subs, whitelist_similar in WHITELIST_DOMAINS:
+    for domain_body, tld, subs in TARGETED_DOMAINS:
         for url_regex in all_possible_regexes(domain_body, subs):
             rule = {
                 "trigger": {
                     "url-filter": url_regex,
-                    "unless-domain": [f"*{domain_body}.{tld}"] + [f"*{x}" for x in whitelist_similar]
+                    "unless-domain": [f"{x}" for x in whitelisted_domains]
                 },
                 "action": {
                     "type": "block"
@@ -123,11 +143,11 @@ def save_and_push_file(content_blocker_json):
                                      target=CLONE_LOCATION, key_filename=PRIVATE_KEY_FILENAME,
                                      errstream=porcelain.NoneStream())
 
-    with open(f"{CLONE_LOCATION}/{BLOCKLIST_FILENAME}", 'w') as content_blocker_file:
+    with open(BLOCKLIST_FILE_PATH, 'w') as content_blocker_file:
         json.dump(content_blocker_json, content_blocker_file, sort_keys=True, indent=4, separators=(',', ': '))
 
     if porcelain.status(blocklist_repo.path).unstaged:
-        porcelain.add(blocklist_repo.path, paths=[blocklist_repo.path + f"/{BLOCKLIST_FILENAME}"])
+        porcelain.add(blocklist_repo.path, paths=[BLOCKLIST_FILE_PATH])
         porcelain.commit(blocklist_repo.path, message="Update blockList.json",
                          author=GIT_AUTHOR,
                          committer=GIT_AUTHOR)
