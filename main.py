@@ -141,6 +141,7 @@ def get_subs_for_domain(domain_body):
     else:
         return 1
 
+
 def save_and_push_file(content_blocker_json):
 
     if os.path.exists(CLONE_LOCATION):
