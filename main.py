@@ -27,6 +27,7 @@ TARGETED_DOMAINS = [
     ("bitstamp", "net"),
     ("bittrex", "com"),
     ("blockchain", "com"),
+    ("blockchair", "com"),
     ("cobinhood", "com"),
     ("coinbase", "com"),
     ("coindash", "io"),
