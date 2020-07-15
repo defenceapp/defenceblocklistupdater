@@ -17,68 +17,10 @@ GIT_DEPLOY_KEY = f"-----BEGIN OPENSSH PRIVATE KEY-----\n" \
                  f"{os.environ['DEFENCEBLOCKER_DEPLOY_KEY']}\n" \
                  f"-----END OPENSSH PRIVATE KEY-----"
 
-BLACKLIST_URL = "https://etherscamdb.info/api/blacklist/"
-WHITELIST_URL = "https://etherscamdb.info/api/whitelist/"
-
-TARGETED_DOMAINS = [
-    ("airswap", "io"),
-    ("bitfinex", "com"),
-    ("bitmex", "com"),
-    ("bitstamp", "net"),
-    ("bittrex", "com"),
-    ("blockchain", "com"),
-    ("blockchair", "com"),
-    ("cobinhood", "com"),
-    ("coinbase", "com"),
-    ("coindash", "io"),
-    ("coindesk", "com"),
-    ("electrum", "org"),
-    ("etherdelta", "com"),
-    ("ethfinex", "com"),
-    ("hitbtc", "com"),
-    ("kraken", "com"),
-    ("mycrypto", "com"),
-    ("myetherwallet", "com"),
-    ("poloniex", "com"),
-    ("shapeshift", "com"),
-    ("shapeshift", "io"),
-]
-
-COMMON_SUBS = {
-
-    "a": ("e",),
-    "e": ("a",),
-    "w": ("v",),
-    "l": ("i", "1", "t"),
-    "n": ("m",),
-    "m": ("n",),
-    "i": ("l", "1", "t"),
-}
-
-
-def all_possible_subs(domain, subs):
-    domains = set()
-    for i in range(len(domain)):
-        subdomain = domain[0:i] + domain[i+1:len(domain)]
-        domains.add(subdomain)
-        if subs > 1:
-            domains = domains.union(all_possible_subs(subdomain, subs-1))
-    return sorted(list(domains))
-
-
-def all_possible_regexes(domain, subs):
-    sub_domains = all_possible_subs(domain, subs)
-    regex_domains = []
-    for domain in sub_domains:
-        domain_with_fuzz = ".?"
-        for character in domain:
-            domain_with_fuzz += f"[{character}{''.join(COMMON_SUBS.get(character, []))}].?"
-        regex_domains.append(fr"https?://([a-z0-9\-]*\.)*(xn\-\-)?{domain_with_fuzz}(\-[a-z0-9]*)?([a-z0-9\-]*\.)*\..*")
-    return regex_domains
-
+BLACKLIST_URL = "https://api.cryptoscamdb.org/v1/blacklist"
 
 def fetch_domain_list(url):
-    json_result = requests.get(url).json()
+    json_result = requests.get(url).json().get('result')
     domains = []
     for result in json_result:
         if re.match(r"\d+\.\d+\.\d+\.\d+", result):
@@ -93,54 +35,19 @@ def fetch_domain_list(url):
 
 def main():
 
-    domains = fetch_domain_list(BLACKLIST_URL)
-
-    whitelisted_domains = fetch_domain_list(WHITELIST_URL)
-
-    for domain_body, tld in TARGETED_DOMAINS:
-        whitelisted_domains.append(f"*{domain_body}.{tld}")
-
-    whitelisted_domains = list(set(whitelisted_domains))
-    whitelisted_domains.sort()
+    blacklist_domains = fetch_domain_list(BLACKLIST_URL)
 
     content_blocker_json = [{
         "trigger": {
             "url-filter": ".*",
-            "if-domain": domains
+            "if-domain": blacklist_domains
         },
         "action": {
             "type": "block"
         }
     }]
 
-    url_regexes = []
-    unique_domain_bodies = sorted(list(set([x[0] for x in TARGETED_DOMAINS])))
-    for domain_body in unique_domain_bodies:
-        subs = get_subs_for_domain(domain_body)
-        for url_regex in all_possible_regexes(domain_body, subs):
-            rule = {
-                "trigger": {
-                    "url-filter": url_regex,
-                    "unless-domain": [f"{x}" for x in whitelisted_domains]
-                },
-                "action": {
-                    "type": "block"
-                }
-            }
-            url_regexes.append(url_regex)
-            content_blocker_json.append(rule)
-
-    print(f"{len(url_regexes)} total regexes")
-
     save_and_push_file(content_blocker_json)
-
-
-def get_subs_for_domain(domain_body):
-    domain_body_len = len(domain_body)
-    if domain_body_len <= 7:
-        return 0
-    else:
-        return 1
 
 
 def save_and_push_file(content_blocker_json):
